@@ -133,6 +133,26 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
 .meeting-time{font-size:9px;color:var(--blue);font-weight:700;white-space:nowrap;}
 .day-add-btn{margin:4px 5px 5px;background:none;border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:5px;width:calc(100% - 10px);cursor:pointer;font-size:11px;color:var(--text3);font-family:inherit;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:4px;}
 .day-add-btn:hover{border-color:var(--accent2);color:var(--accent);background:var(--accent-light);}
+.todo-item{position:relative;}
+.todo-item[draggable=true]{cursor:grab;}
+.todo-item[draggable=true]:active{cursor:grabbing;}
+.todo-item.dragging{opacity:0.4;border:2px dashed var(--accent);}
+.day-items.drag-over{background:var(--accent-light);border-radius:var(--radius-sm);outline:2px dashed var(--accent);}
+.todo-item.hl-red{border-left-color:#E74C3C;background:#FDECEA;}
+.todo-item.hl-yellow{border-left-color:#D4AC0D;background:#FEF9E7;}
+.todo-item.hl-green{border-left-color:#27AE60;background:#EAFAF1;}
+.hl-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.hl-dot.hl-red{background:#E74C3C;}
+.hl-dot.hl-yellow{background:#D4AC0D;}
+.hl-dot.hl-green{background:#27AE60;}
+.highlight-btns{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;}
+.hl-btn{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;flex-shrink:0;}
+.hl-btn:hover{transform:scale(1.2);}
+.hl-btn.selected{border-color:var(--text);}
+.hl-btn.hl-red-btn{background:#E74C3C;}
+.hl-btn.hl-yellow-btn{background:#D4AC0D;}
+.hl-btn.hl-green-btn{background:#27AE60;}
+.hl-btn.hl-none-btn{background:var(--surface2);border:2px solid var(--border);font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--text3);}
 
 /* ══ MONTHLY ══ */
 .monthly-todos-section{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 20px;margin-bottom:20px;}
@@ -478,6 +498,15 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
       <label>Assign to (select others to share)</label>
       <div class="assignee-list" id="assigneeList"></div>
     </div>
+    <div class="form-row">
+      <label>Highlight Color</label>
+      <div class="highlight-btns">
+        <button class="hl-btn hl-none-btn" id="hl-none" onclick="setHighlight(null)" title="No highlight">✕</button>
+        <button class="hl-btn hl-red-btn" id="hl-red" onclick="setHighlight('red')" title="Red"></button>
+        <button class="hl-btn hl-yellow-btn" id="hl-yellow" onclick="setHighlight('yellow')" title="Yellow"></button>
+        <button class="hl-btn hl-green-btn" id="hl-green" onclick="setHighlight('green')" title="Green"></button>
+      </div>
+    </div>
     <div class="toggle-row">
       <button class="toggle" id="meetToggle" onclick="toggleMeeting()"></button>
       <span class="toggle-label">This is a meeting</span>
@@ -577,14 +606,24 @@ let todos=[],mTodos=[],memos=[],clients=[];
 let wkStart=weekStart(new Date());
 let curMonth=new Date();
 let editTodoId=null,editMemoId=null,todoDate=null;
-let meetOn=false,recOn=true;
+let meetOn=false,recOn=true,currentHighlight=null;
 
 // ══════════════════════════════════════════
 //  UTILS
 // ══════════════════════════════════════════
 function weekStart(d){const dt=new Date(d);dt.setDate(dt.getDate()-dt.getDay());dt.setHours(0,0,0,0);return dt;}
 function addD(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt;}
-function fd(d){return d.toISOString().slice(0,10);}
+function fd(d){
+  // Use local time, not UTC, to avoid timezone shift
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+function parseDate(s){
+  // Parse date string as LOCAL time (not UTC) to avoid Korea timezone shift
+  if(!s)return new Date();
+  const[y,m,d]=s.split('-').map(Number);
+  return new Date(y,m-1,d);
+}
 function fdDisp(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fdMonth(d){return d.toLocaleDateString('en-US',{month:'long',year:'numeric'});}
 function uid(){return 'i'+Date.now()+Math.random().toString(36).slice(2,6);}
@@ -860,7 +899,11 @@ function renderWeekly(){
       const done=isDone(t);
       const shared=isShared(t);
       const oname=ownerName(t);
-      return `<div class="todo-item${t.isMeeting?' meeting':''}${shared?' shared-item':''}${done?' done':''}" onclick="openEditTodo('${t.id}')">
+      const canDrag=t.owner_id===currentUser.id&&!isReadOnly();
+      const hlClass=t.highlight?` hl-${t.highlight}`:'';
+      return `<div class="todo-item${t.isMeeting?' meeting':''}${shared?' shared-item':''}${done?' done':''}${hlClass}"
+        ${canDrag?`draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragend="dragEnd(event)"`:''}
+        onclick="openEditTodo('${t.id}')">
         <div class="todo-check${done?' checked':''}" onclick="event.stopPropagation();toggleTodo('${t.id}')"></div>
         <div class="todo-text">${esc(t.text)}${oname?`<br><span style="font-size:9px;color:var(--shared);">from ${esc(oname)}</span>`:''}</div>
         <div class="todo-meta">
@@ -873,7 +916,10 @@ function renderWeekly(){
     const canAdd=!isReadOnly();
     return `<div class="day-col${isToday?' today':''}${has?' has-items':''}">
       <div class="day-header"><div class="day-name">${DS[i]}</div><div class="day-num">${d.getDate()}</div></div>
-      <div class="day-items">${items}</div>
+      <div class="day-items" 
+        ondragover="dragOver(event)" 
+        ondragleave="dragLeave(event)" 
+        ondrop="dropOnDay(event,'${ds}')">${items}</div>
       ${canAdd?`<button class="day-add-btn" onclick="openAddTodo('${ds}')">+ Add</button>`:''}
     </div>`;
   }).join('');
@@ -925,7 +971,7 @@ function renderMonthly(){
   document.getElementById('calBody').innerHTML=cal;
 }
 function changeMonth(n){curMonth=new Date(curMonth.getFullYear(),curMonth.getMonth()+n,1);renderMonthly();}
-function goToDay(ds){const d=new Date(ds+'T00:00:00');wkStart=weekStart(d);showPage('weekly');}
+function goToDay(ds){const d=parseDate(ds);wkStart=weekStart(d);showPage('weekly');}
 
 // ══════════════════════════════════════════
 //  MEMO
@@ -972,8 +1018,9 @@ async function toggleMTodo(id){
   t.done=!t.done;
   t.done_month=t.done?mk:null;
   mTodos.sort((a,b)=>a.done===b.done?0:a.done?1:-1);
-  if(sb){setSync('loading');await sb.from('monthly_todos').update({done:t.done,done_month:t.done_month}).eq('id',id);setSync('ok');}
+  // Update UI instantly, save to Supabase in background
   saveLocal();renderMonthly();
+  if(sb){setSync('loading');sb.from('monthly_todos').update({done:t.done,done_month:t.done_month}).eq('id',id).then(()=>setSync('ok')).catch(()=>setSync('err'));}
 }
 async function toggleMemo(id){
   if(isReadOnly())return;
@@ -1004,6 +1051,13 @@ function getSelectedAssignees(){
 // ══════════════════════════════════════════
 //  TODO MODAL
 // ══════════════════════════════════════════
+function setHighlight(color){
+  currentHighlight=color;
+  ['none','red','yellow','green'].forEach(c=>{
+    const el=document.getElementById('hl-'+c);
+    if(el)el.classList.toggle('selected', c===(color||'none'));
+  });
+}
 function openAddTodo(ds){
   if(isReadOnly())return;
   editTodoId=null;todoDate=ds;meetOn=false;
@@ -1016,6 +1070,7 @@ function openAddTodo(ds){
   document.getElementById('meetFields').style.display='none';
   document.getElementById('todoDelRow').style.display='none';
   renderAssigneeList([]);
+  setHighlight(null);
   document.getElementById('todoModal').classList.add('open');
   setTimeout(()=>document.getElementById('todoText').focus(),320);
 }
@@ -1033,6 +1088,7 @@ function openEditTodo(id){
   document.getElementById('meetFields').style.display=meetOn?'block':'none';
   document.getElementById('todoDelRow').style.display=canEdit?'block':'none';
   renderAssigneeList(t.assignee_ids||[]);
+  setHighlight(t.highlight||null);
   // disable fields if not owner
   ['todoText','todoClient','meetTime','meetTz'].forEach(fid=>{
     const el=document.getElementById(fid);if(el)el.disabled=!canEdit;
@@ -1063,7 +1119,8 @@ async function saveTodo(){
     done_by:editTodoId?todos.find(x=>x.id===editTodoId)?.done_by||{}:{},
     date:todoDate,isMeeting:meetOn,
     meetingTime:meetOn?document.getElementById('meetTime').value:null,
-    meetingTz:meetOn?document.getElementById('meetTz').value:null
+    meetingTz:meetOn?document.getElementById('meetTz').value:null,
+    highlight:currentHighlight||null
   };
   setSync('loading');
   if(editTodoId){
@@ -1174,6 +1231,49 @@ document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
 });
 function renderAll(){refreshDD();renderWeekly();renderMonthly();renderMemo();renderClients();}
+
+// ══════════════════════════════════════════
+//  DRAG AND DROP
+// ══════════════════════════════════════════
+let draggedId=null;
+
+function dragStart(e,id){
+  draggedId=id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function dragEnd(e){
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.day-items').forEach(el=>el.classList.remove('drag-over'));
+}
+function dragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  e.currentTarget.classList.add('drag-over');
+}
+function dragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+async function dropOnDay(e,newDate){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!draggedId)return;
+  const t=todos.find(x=>x.id===draggedId);
+  if(!t||t.date===newDate)return;
+  t.date=newDate;
+  // Update instantly on screen
+  renderWeekly();renderMonthly();
+  // Save to Supabase in background
+  if(sb){
+    setSync('loading');
+    sb.from('todos').update({date:newDate}).eq('id',draggedId)
+      .then(()=>{setSync('ok');saveLocal();})
+      .catch(()=>setSync('err'));
+  } else {
+    saveLocal();
+  }
+  draggedId=null;
+}
 
 // ══════════════════════════════════════════
 //  INIT
