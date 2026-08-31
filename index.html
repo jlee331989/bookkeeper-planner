@@ -109,6 +109,7 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
 /* ══ WEEKLY ══ */
 /* ── Todo Calendar Grid ── */
 .todo-cal-wrap{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.swipe-hint{display:none;background:#1A1A1A;color:rgba(255,255,255,0.55);font-size:10px;text-align:center;padding:5px;letter-spacing:0.3px;}
 .todo-cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--accent);}
 .todo-cal-dow{padding:8px 4px;text-align:center;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.75);}
 .todo-cal-body{display:grid;grid-template-columns:repeat(7,1fr);}
@@ -198,6 +199,36 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
 .memo-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:2px 4px;border-radius:4px;}
 .memo-del:hover{background:var(--red-light);color:var(--red);}
 
+/* ══ SETTINGS ══ */
+.settings-section{margin-bottom:22px;}
+.settings-section-title{font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+.recurring-template-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px;font-size:12.5px;}
+.recurring-template-item .rt-name{flex:1;font-weight:600;}
+.recurring-template-item .rt-meta{font-size:11px;color:var(--text3);}
+
+/* ══ UNSCHEDULED BLOCK ══ */
+.unscheduled-block{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;}
+.unscheduled-header{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--surface2);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px;}
+.unscheduled-title{font-size:13px;font-weight:700;color:var(--text2);}
+.unscheduled-count{font-size:11px;color:var(--text3);margin-left:6px;}
+.unscheduled-actions{display:flex;gap:8px;align-items:center;}
+.unscheduled-items{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;min-height:54px;}
+.unscheduled-item{
+  background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  padding:7px 10px;font-size:12px;display:flex;align-items:flex-start;gap:7px;
+  cursor:grab;transition:box-shadow 0.15s;max-width:220px;
+  border-left:3px solid var(--border);
+}
+.unscheduled-item:active{cursor:grabbing;}
+.unscheduled-item.dragging{opacity:0.4;}
+.unscheduled-item.meeting{border-left-color:var(--blue);background:var(--blue-light);}
+.unscheduled-item.hl-red{border-left-color:#E74C3C;background:#FDECEA;}
+.unscheduled-item.hl-yellow{border-left-color:#D4AC0D;background:#FEF9E7;}
+.unscheduled-item.hl-green{border-left-color:#27AE60;background:#EAFAF1;}
+.unscheduled-empty{color:var(--text3);font-size:12px;padding:6px 2px;}
+/* Drop zone highlight for unscheduled block */
+.unscheduled-items.drag-over{background:var(--accent-light);outline:2px dashed var(--accent);border-radius:var(--radius-sm);}
+
 /* ══ CLIENTS ══ */
 .client-list-inline{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-height:28px;}
 .client-chip{display:flex;align-items:center;gap:5px;background:var(--accent-light);color:var(--accent);border-radius:20px;padding:4px 9px 4px 12px;font-size:12px;font-weight:700;}
@@ -267,12 +298,18 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
   .week-nav{width:100%;justify-content:space-between;}
   .week-label,.month-label{font-size:10px;min-width:unset;}
   .config-bar{margin:10px 13px;font-size:11px;}
-  .todo-cal-body{grid-template-columns:repeat(7,1fr);}
-  .day-col{min-height:70px;}
-  .day-header{padding:4px 4px 3px;}
-  .day-num{font-size:11px;}
-  .todo-item{font-size:9px;padding:3px 4px;}
-  .day-add-btn{font-size:9px;padding:3px;}
+  /* Mobile: horizontally scrollable calendar */
+  .todo-cal-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .todo-cal-header{width:700px;}
+  .todo-cal-body{width:700px;grid-template-columns:repeat(7,1fr);}
+  .day-col{min-height:100px;}
+  .day-header{padding:5px 5px 4px;}
+  .day-name{font-size:8px;}
+  .day-num{font-size:13px;}
+  .todo-item{font-size:10px;padding:4px 5px;}
+  .tag-badge{font-size:8px;max-width:60px;}
+  .day-add-btn{font-size:10px;padding:4px;}
+  .swipe-hint{display:block!important;}
   .cal-day{min-height:55px;padding:4px 3px;}
   .cal-dot{font-size:8px;}
   .memo-table-wrap{overflow:visible;}
@@ -341,8 +378,8 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
         Memo
       </div>
       <div class="sidebar-link" data-page="clients" onclick="showPage('clients')">
-        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-        Clients
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -379,7 +416,28 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
             <button class="nav-btn" onclick="goToToday()">Today</button>
           </div>
         </div>
+        <!-- Unscheduled block -->
+        <div class="unscheduled-block">
+          <div class="unscheduled-header">
+            <div>
+              <span class="unscheduled-title">Unscheduled</span>
+              <span class="unscheduled-count" id="unscheduledCount"></span>
+            </div>
+            <div class="unscheduled-actions">
+              <button class="btn-add" onclick="loadRecurringTasks()" style="font-size:11px;padding:6px 11px;">📋 Load Recurring</button>
+              <button class="nav-btn" onclick="openAddUnscheduled()" style="font-size:11px;">+ Add</button>
+            </div>
+          </div>
+          <div class="unscheduled-items" id="unscheduledItems"
+            ondragover="dragOver(event)"
+            ondragleave="dragLeave(event)"
+            ondrop="dropOnUnscheduled(event)">
+            <span class="unscheduled-empty">No unscheduled tasks. Click "Load Recurring" or "+ Add".</span>
+          </div>
+        </div>
+
         <div class="todo-cal-wrap">
+          <div class="swipe-hint">← swipe left / right to see full week →</div>
           <div class="todo-cal-header">
             <div class="todo-cal-dow">Sun</div><div class="todo-cal-dow">Mon</div>
             <div class="todo-cal-dow">Tue</div><div class="todo-cal-dow">Wed</div>
@@ -441,22 +499,36 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
       </div>
     </div>
 
-    <!-- CLIENTS -->
+    <!-- SETTINGS -->
     <div class="page" id="page-clients">
       <div class="page-inner">
         <div class="page-header">
-          <div><div class="page-title">Clients</div><div class="page-subtitle">Your personal client list</div></div>
+          <div><div class="page-title">Settings</div><div class="page-subtitle">Manage clients and recurring tasks</div></div>
         </div>
-        <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;max-width:500px;">
-          <div class="client-list-inline" id="clientChips"></div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <input type="text" id="newClientInput" placeholder="Add client name…"
-              style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:16px;font-family:inherit;background:var(--bg);"
-              onkeydown="if(event.key==='Enter')addClient()"/>
-            <button class="btn-add" onclick="addClient()">+ Add</button>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Clients</div>
+          <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;max-width:500px;">
+            <div class="client-list-inline" id="clientChips"></div>
+            <div style="display:flex;gap:8px;margin-top:8px;">
+              <input type="text" id="newClientInput" placeholder="Add client name…"
+                style="flex:1;padding:9px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:16px;font-family:inherit;background:var(--bg);"
+                onkeydown="if(event.key==='Enter')addClient()"/>
+              <button class="btn-add" onclick="addClient()">+ Add</button>
+            </div>
+            <p style="margin-top:12px;font-size:11px;color:var(--text3);">These names appear as dropdown options when adding tasks and memos.</p>
           </div>
-          <p style="margin-top:12px;font-size:11px;color:var(--text3);">These names appear as dropdown options when adding tasks and memos.</p>
         </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">Recurring Tasks</div>
+          <div style="background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 22px;max-width:500px;">
+            <p style="font-size:12px;color:var(--text3);margin-bottom:14px;">Personal recurring task templates. Use "Load Recurring" on the To-Do page to add them to any month's Unscheduled list.</p>
+            <div id="recurringTemplateList" style="margin-bottom:14px;"></div>
+            <button class="btn-add" onclick="openRecurringTemplateModal()">+ Add Recurring Task</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -472,12 +544,49 @@ main{margin-left:220px;flex:1;padding:28px 32px 48px;max-width:calc(100vw - 220p
       <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Memo
     </button>
     <button class="mob-nav-btn" data-page="clients" onclick="showPage('clients')">
-      <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Clients
+      <svg width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Settings
     </button>
   </div>
 </div>
 
 <!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Recurring Template Modal -->
+<div class="modal-overlay" id="recurringTemplateModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="rtModalTitle">Add Recurring Task</h2>
+    <div class="form-row"><label>Task Name</label>
+      <input type="text" id="rtText" placeholder="e.g. LHG Bookkeeping" autocomplete="off"/></div>
+    <div class="form-row"><label>Client</label>
+      <select id="rtClient"><option value="">— No client —</option></select></div>
+    <div class="toggle-row">
+      <button class="toggle" id="rtMeetToggle" onclick="toggleRtMeeting()"></button>
+      <span class="toggle-label">This is a meeting</span>
+    </div>
+    <div id="rtMeetFields" style="display:none;">
+      <div class="form-grid-2">
+        <div class="form-row"><label>Time</label><input type="time" id="rtMeetTime"/></div>
+        <div class="form-row"><label>US Time Zone</label>
+          <select id="rtMeetTz">
+            <option value="America/New_York">Eastern (ET)</option>
+            <option value="America/Chicago">Central (CT)</option>
+            <option value="America/Denver">Mountain (MT)</option>
+            <option value="America/Los_Angeles">Pacific (PT)</option>
+            <option value="America/Anchorage">Alaska (AKT)</option>
+            <option value="Pacific/Honolulu">Hawaii (HT)</option>
+          </select></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeRecurringTemplateModal()">Cancel</button>
+      <button class="btn-primary" onclick="saveRecurringTemplate()">Save</button>
+    </div>
+    <div id="rtDeleteRow" style="margin-top:8px;display:none;">
+      <button class="btn-primary btn-danger" style="width:100%;" onclick="deleteRecurringTemplate()">Delete</button>
+    </div>
+  </div>
+</div>
 
 <!-- Admin: manage users -->
 <div class="modal-overlay" id="adminModal">
@@ -1097,8 +1206,8 @@ function setHighlight(color){
 }
 function openAddTodo(ds){
   if(isReadOnly())return;
-  editTodoId=null;todoDate=ds;meetOn=false;
-  document.getElementById('todoModalTitle').textContent='Add Task';
+  editTodoId=null;todoDate=ds||null;meetOn=false;
+  document.getElementById('todoModalTitle').textContent=ds?'Add Task':'Add Unscheduled Task';
   document.getElementById('todoText').value='';
   document.getElementById('todoClient').value='';
   document.getElementById('meetTime').value='';
@@ -1253,7 +1362,7 @@ async function deleteMemo(){
 // ══════════════════════════════════════════
 //  NAVIGATION
 // ══════════════════════════════════════════
-const PAGE_NAMES={weekly:'To-Do',monthly:'Monthly',memo:'Memo',clients:'Clients'};
+const PAGE_NAMES={weekly:'To-Do',monthly:'Monthly',memo:'Memo',clients:'Settings'};
 function showPage(name){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sidebar-link,.mob-nav-btn').forEach(l=>l.classList.remove('active'));
@@ -1262,12 +1371,179 @@ function showPage(name){
   const t=document.getElementById('mobileTitle');if(t)t.textContent=PAGE_NAMES[name]||name;
   if(name==='monthly')renderMonthly();
   if(name==='memo')renderMemo();
-  if(name==='clients')renderClients();
+  if(name==='clients'){renderClients();loadRecurringTemplates();}
 }
 document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
 });
-function renderAll(){refreshDD();renderWeekly();renderMonthly();renderMemo();renderClients();}
+function renderAll(){refreshDD();renderWeekly();renderMonthly();renderMemo();renderClients();renderUnscheduled();loadRecurringTemplates();}
+
+// ══════════════════════════════════════════
+//  RECURRING TEMPLATES
+// ══════════════════════════════════════════
+let recurringTemplates=[]; // [{id,text,client,isMeeting,meetingTime,meetingTz}]
+let editRtId=null;
+let rtMeetOn=false;
+
+async function loadRecurringTemplates(){
+  if(sb){
+    const{data}=await sb.from('recurring_templates').select('*').eq('owner_id',currentUser.id).order('created_at');
+    recurringTemplates=data||[];
+  } else {
+    recurringTemplates=JSON.parse(localStorage.getItem('bk_rt_'+(currentUser?.id||''))||'[]');
+  }
+  renderRecurringTemplates();
+}
+function saveRtLocal(){
+  localStorage.setItem('bk_rt_'+(currentUser?.id||''),JSON.stringify(recurringTemplates));
+}
+function renderRecurringTemplates(){
+  const el=document.getElementById('recurringTemplateList');
+  if(!el)return;
+  el.innerHTML=recurringTemplates.length
+    ?recurringTemplates.map(t=>`
+      <div class="recurring-template-item">
+        <div>
+          <div class="rt-name">${esc(t.text)}</div>
+          <div class="rt-meta">${t.client?esc(t.client):'No client'}${t.isMeeting&&t.meetingTime?' · 🕐 '+t.meetingTime+' '+(TZ[t.meetingTz]||''):''}</div>
+        </div>
+        <button class="nav-btn" style="font-size:11px;margin-left:auto;" onclick="openEditRt('${t.id}')">Edit</button>
+        <button class="memo-del" onclick="deleteRecurringTemplate('${t.id}')">×</button>
+      </div>`).join('')
+    :'<div class="empty-state">No recurring tasks yet.</div>';
+}
+
+function openRecurringTemplateModal(){
+  editRtId=null;rtMeetOn=false;
+  document.getElementById('rtModalTitle').textContent='Add Recurring Task';
+  document.getElementById('rtText').value='';
+  document.getElementById('rtClient').value='';
+  document.getElementById('rtMeetTime').value='';
+  document.getElementById('rtMeetTz').value='America/New_York';
+  document.getElementById('rtMeetToggle').className='toggle';
+  document.getElementById('rtMeetFields').style.display='none';
+  document.getElementById('rtDeleteRow').style.display='none';
+  // populate client dropdown
+  const opts=clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('rtClient').innerHTML='<option value="">— No client —</option>'+opts;
+  document.getElementById('recurringTemplateModal').classList.add('open');
+  setTimeout(()=>document.getElementById('rtText').focus(),300);
+}
+function openEditRt(id){
+  const t=recurringTemplates.find(x=>x.id===id);if(!t)return;
+  editRtId=id;rtMeetOn=!!t.isMeeting;
+  document.getElementById('rtModalTitle').textContent='Edit Recurring Task';
+  document.getElementById('rtText').value=t.text;
+  const opts=clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  document.getElementById('rtClient').innerHTML='<option value="">— No client —</option>'+opts;
+  document.getElementById('rtClient').value=t.client||'';
+  document.getElementById('rtMeetTime').value=t.meetingTime||'';
+  document.getElementById('rtMeetTz').value=t.meetingTz||'America/New_York';
+  document.getElementById('rtMeetToggle').className='toggle'+(rtMeetOn?' on':'');
+  document.getElementById('rtMeetFields').style.display=rtMeetOn?'block':'none';
+  document.getElementById('rtDeleteRow').style.display='block';
+  document.getElementById('recurringTemplateModal').classList.add('open');
+}
+function closeRecurringTemplateModal(){document.getElementById('recurringTemplateModal').classList.remove('open');}
+function toggleRtMeeting(){
+  rtMeetOn=!rtMeetOn;
+  document.getElementById('rtMeetToggle').className='toggle'+(rtMeetOn?' on':'');
+  document.getElementById('rtMeetFields').style.display=rtMeetOn?'block':'none';
+}
+async function saveRecurringTemplate(){
+  const text=document.getElementById('rtText').value.trim();if(!text)return;
+  const rec={
+    text,client:document.getElementById('rtClient').value,
+    isMeeting:rtMeetOn,
+    meetingTime:rtMeetOn?document.getElementById('rtMeetTime').value:null,
+    meetingTz:rtMeetOn?document.getElementById('rtMeetTz').value:null,
+    owner_id:currentUser.id
+  };
+  setSync('loading');
+  if(editRtId){
+    Object.assign(recurringTemplates.find(x=>x.id===editRtId),rec);
+    if(sb)await sb.from('recurring_templates').update(rec).eq('id',editRtId);
+  } else {
+    rec.id=uid();recurringTemplates.push(rec);
+    if(sb)await sb.from('recurring_templates').insert(rec);
+  }
+  setSync('ok');saveRtLocal();closeRecurringTemplateModal();renderRecurringTemplates();
+}
+async function deleteRecurringTemplate(id){
+  const delId=id||editRtId;
+  if(!delId||!confirm('Delete this recurring task template?'))return;
+  recurringTemplates=recurringTemplates.filter(x=>x.id!==delId);
+  if(sb){setSync('loading');await sb.from('recurring_templates').delete().eq('id',delId);setSync('ok');}
+  saveRtLocal();closeRecurringTemplateModal();renderRecurringTemplates();
+}
+
+// ── Load recurring tasks into Unscheduled for current month ──
+async function loadRecurringTasks(){
+  if(!recurringTemplates.length){
+    alert('No recurring tasks set up yet. Go to Settings to add some.');return;
+  }
+  const y=wkStart.getFullYear(),m=wkStart.getMonth();
+  const monthKey=`${y}-${String(m+1).padStart(2,'0')}`;
+  // Find existing unscheduled todos for this month that came from recurring
+  const existing=todos.filter(t=>!t.date&&t.owner_id===currentUser.id&&t.from_month===monthKey);
+  const existingTexts=existing.map(t=>t.text.toLowerCase());
+  let added=0;
+  for(const rt of recurringTemplates){
+    // Skip if already loaded this month (match by text+month)
+    if(existingTexts.includes(rt.text.toLowerCase()))continue;
+    const rec={
+      id:uid(),text:rt.text,client:rt.client||null,
+      owner_id:currentUser.id,assignee_ids:[],
+      done:false,done_by:{},
+      date:null, // null = unscheduled
+      from_month:monthKey,
+      isMeeting:rt.isMeeting||false,
+      meetingTime:rt.meetingTime||null,
+      meetingTz:rt.meetingTz||null,
+      highlight:null
+    };
+    todos.push(rec);
+    if(sb){setSync('loading');await sb.from('todos').insert(rec);}
+    added++;
+  }
+  setSync('ok');saveLocal();renderUnscheduled();
+  if(added===0)alert('All recurring tasks are already in this month's Unscheduled list.');
+  else alert(`Added ${added} recurring task${added>1?'s':''} to Unscheduled!`);
+}
+
+// ══════════════════════════════════════════
+//  UNSCHEDULED TASKS
+// ══════════════════════════════════════════
+function renderUnscheduled(){
+  const el=document.getElementById('unscheduledItems');
+  const countEl=document.getElementById('unscheduledCount');
+  if(!el)return;
+  const viewId=activeUserId();
+  const unscheduled=todos.filter(t=>!t.date&&t.owner_id===viewId);
+  if(countEl)countEl.textContent=unscheduled.length?`(${unscheduled.length})`:'';
+  if(!unscheduled.length){
+    el.innerHTML='<span class="unscheduled-empty">No unscheduled tasks. Click "Load Recurring" or "+ Add".</span>';
+    return;
+  }
+  const ro=isReadOnly();
+  el.innerHTML=unscheduled.map(t=>{
+    const hlClass=t.highlight?` hl-${t.highlight}`:'';
+    return `<div class="unscheduled-item${t.isMeeting?' meeting':''}${hlClass}"
+      ${!ro?`draggable="true" ondragstart="dragStartUnscheduled(event,'${t.id}')" ondragend="dragEnd(event)"`:''}
+      onclick="openEditTodo('${t.id}')">
+      <div class="todo-check${t.done?' checked':''}" onclick="event.stopPropagation();toggleTodo('${t.id}')"></div>
+      <div style="flex:1;min-width:0;">
+        <div class="todo-text">${esc(t.text)}</div>
+        ${t.client?`<span class="tag-badge" style="margin-top:3px;display:inline-block;">${esc(t.client)}</span>`:''}
+        ${t.isMeeting&&t.meetingTime?`<div class="meeting-time" style="margin-top:2px;">🕐 ${t.meetingTime} ${TZ[t.meetingTz]||''}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function openAddUnscheduled(){
+  if(isReadOnly())return;
+  openAddTodo(null); // null date = unscheduled
+}
 
 // ══════════════════════════════════════════
 //  DRAG AND DROP
@@ -1279,9 +1555,14 @@ function dragStart(e,id){
   e.target.classList.add('dragging');
   e.dataTransfer.effectAllowed='move';
 }
+function dragStartUnscheduled(e,id){
+  draggedId=id;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
 function dragEnd(e){
   e.target.classList.remove('dragging');
-  document.querySelectorAll('.day-items').forEach(el=>el.classList.remove('drag-over'));
+  document.querySelectorAll('.day-items,.unscheduled-items').forEach(el=>el.classList.remove('drag-over'));
 }
 function dragOver(e){
   e.preventDefault();
@@ -1298,17 +1579,29 @@ async function dropOnDay(e,newDate){
   const t=todos.find(x=>x.id===draggedId);
   if(!t||t.date===newDate)return;
   t.date=newDate;
-  // Update instantly on screen
-  renderWeekly();renderMonthly();
-  // Save to Supabase in background
+  renderWeekly();renderMonthly();renderUnscheduled();
   if(sb){
     setSync('loading');
     sb.from('todos').update({date:newDate}).eq('id',draggedId)
       .then(()=>{setSync('ok');saveLocal();})
       .catch(()=>setSync('err'));
-  } else {
-    saveLocal();
-  }
+  } else { saveLocal(); }
+  draggedId=null;
+}
+async function dropOnUnscheduled(e){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!draggedId)return;
+  const t=todos.find(x=>x.id===draggedId);
+  if(!t||t.date===null)return;
+  t.date=null; // move back to unscheduled
+  renderWeekly();renderMonthly();renderUnscheduled();
+  if(sb){
+    setSync('loading');
+    sb.from('todos').update({date:null}).eq('id',draggedId)
+      .then(()=>{setSync('ok');saveLocal();})
+      .catch(()=>setSync('err'));
+  } else { saveLocal(); }
   draggedId=null;
 }
 
