@@ -749,7 +749,7 @@ function parseDate(s){
 function fdDisp(d){return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fdMonth(d){return d.toLocaleDateString('en-US',{month:'long',year:'numeric'});}
 function uid(){return 'i'+Date.now()+Math.random().toString(36).slice(2,6);}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function esc(s){if(!s)return '';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 const TZ={'America/New_York':'ET','America/Chicago':'CT','America/Denver':'MT','America/Los_Angeles':'PT','America/Anchorage':'AKT','Pacific/Honolulu':'HT'};
 const DS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function initials(name){return(name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
@@ -1508,7 +1508,7 @@ async function loadRecurringTasks(){
     added++;
   }
   setSync('ok');saveLocal();renderUnscheduled();
-  if(added===0)alert('All recurring tasks are already in this month's Unscheduled list.');
+  if(added===0)alert("All recurring tasks are already in this month's Unscheduled list.");
   else alert(`Added ${added} recurring task${added>1?'s':''} to Unscheduled!`);
 }
 
